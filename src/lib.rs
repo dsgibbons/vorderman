@@ -1,5 +1,4 @@
-
-struct NumbersGame {
+struct NumbersRound {
     numbers: Vec<u32>,
     target: u32,
 }
@@ -11,28 +10,61 @@ enum Operation {
     Divide,
 }
 
-enum SolutionComponent {
-    Number(u32),
-    Operation(Operation),
-    PartialSolution(Box<Expression>),
+struct Edge {
+    operation: Operation,
+    operand: Node,
 }
 
-type Expression = Vec<SolutionComponent>;
-
-pub fn evaluate(expression: Expression) -> f32 {
-
+enum Node {
+    Number(u32, Option<Box<Edge>>),
+    Expression(Box<Node>),
 }
 
-pub fn solve(numbers_game: NumbersGame) -> Expression {
-    Expression::new()
+type NestedExpression = Node;
+
+struct FlatExpression {
+    numbers: Vec<u32>,
+    operations: Vec<Operation>,
 }
 
+impl FlatExpression {
+    fn new() -> FlatExpression {
+        FlatExpression {
+            numbers: Vec::<u32>::new(),
+            operations: Vec::<Operation>::new(),
+        }
+    }
+}
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+enum FlatExpressionError {
+    NoNumbers,
+    TooManyOperations,
+    TooFewOperations,
+}
+
+#[derive(Debug)]
+enum EvaluationError {
+    GenericError,
+}
+
+trait Evaluatable {
+    fn evaluate(&self) -> Result<f32, EvaluationError>;
+}
+
+impl Evaluatable for NestedExpression {
+    fn evaluate(&self) -> Result<f32, EvaluationError> {
+        Ok(0.0)
+    }
+}
+
+impl Evaluatable for FlatExpression {
+    fn evaluate(&self) -> Result<f32, EvaluationError> {
+        Ok(0.0)
+    }
 }
 
 // construct solutions
+// from str method
 // test solutions can be evaluated
 // DFS for building solutions towards target
 
@@ -41,8 +73,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn null_flat_expression() {
+        let expression = FlatExpression::new();
+        assert_eq!(expression.evaluate().unwrap(), 0.0);
+    }
+
+    #[test]
+    fn null_nested_expression() {
+        let expression = Node::Number(0, None);
+        assert_eq!(expression.evaluate().unwrap(), 0.0);
     }
 }
