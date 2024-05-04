@@ -65,6 +65,7 @@ impl Evaluatable for FlatExpression {
 
 // construct solutions
 // from str method
+// to str method - test that to and from is reversible
 // test solutions can be evaluated
 // DFS for building solutions towards target
 
@@ -74,7 +75,8 @@ mod tests {
 
     #[test]
     fn null_flat_expression() {
-        let expression = FlatExpression::new();
+        let mut expression = FlatExpression::new();
+        expression.numbers.push(0);
         assert_eq!(expression.evaluate().unwrap(), 0.0);
     }
 
