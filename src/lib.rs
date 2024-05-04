@@ -12,15 +12,15 @@ enum Operation {
 
 struct Edge {
     operation: Operation,
-    operand: Node,
+    operand: NestedExpression,
 }
 
 enum Node {
-    Number(u32, Option<Box<Edge>>),
-    Expression(Box<Node>),
+    Number(u32),
+    Expression(NestedExpression),
 }
 
-type NestedExpression = Node;
+struct NestedExpression(Box<Node>, Option<Box<Edge>>);
 
 struct FlatExpression {
     numbers: Vec<u32>,
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn null_nested_expression() {
-        let expression = Node::Number(0, None);
+        let expression = NestedExpression(Box::new(Node::Number(0)), None);
         assert_eq!(expression.evaluate().unwrap(), 0.0);
     }
 }
