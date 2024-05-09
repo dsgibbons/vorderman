@@ -1,3 +1,5 @@
+use num::rational::Ratio;
+
 struct NumbersRound {
     numbers: Vec<u32>,
     target: u32,
@@ -37,7 +39,7 @@ impl FlatExpression {
 }
 
 enum FlatExpressionError {
-    NoNumbers,
+    NoNodes,
     TooManyOperations,
     TooFewOperations,
 }
