@@ -50,18 +50,18 @@ enum EvaluationError {
 }
 
 trait Evaluatable {
-    fn evaluate(&self) -> Result<f32, EvaluationError>;
+    fn evaluate(&self) -> Result<Ratio<u32>, EvaluationError>;
 }
 
 impl Evaluatable for LinkedExpression {
-    fn evaluate(&self) -> Result<f32, EvaluationError> {
-        Ok(0.0)
+    fn evaluate(&self) -> Result<Ratio<u32>, EvaluationError> {
+        Ok(Ratio::from_integer(0))
     }
 }
 
 impl Evaluatable for FlatExpression {
-    fn evaluate(&self) -> Result<f32, EvaluationError> {
-        Ok(0.0)
+    fn evaluate(&self) -> Result<Ratio<u32>, EvaluationError> {
+        Ok(Ratio::from_integer(0))
     }
 }
 
@@ -79,12 +79,12 @@ mod tests {
     fn null_flat_expression() {
         let mut expression = FlatExpression::new();
         expression.nodes.push(Node::Number(0));
-        assert_eq!(expression.evaluate().unwrap(), 0.0);
+        assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
     }
 
     #[test]
     fn null_nested_expression() {
         let expression = LinkedExpression(Node::Number(0), None);
-        assert_eq!(expression.evaluate().unwrap(), 0.0);
+        assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
     }
 }
