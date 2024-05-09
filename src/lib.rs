@@ -24,24 +24,24 @@ enum Node<T> {
 
 struct LinkedExpression(Node<LinkedExpression>, Option<Edge>);
 
-struct FlatExpression {
-    nodes: Vec<Node<FlatExpression>>,
-    operations: Vec<Operation>,
+struct VecExpression {
+    nodes: Vec<Node<VecExpression>>,
+    edges: Vec<Operation>,
 }
 
-impl FlatExpression {
-    fn new() -> FlatExpression {
-        FlatExpression {
-            nodes: Vec::<Node<FlatExpression>>::new(),
-            operations: Vec::<Operation>::new(),
+impl VecExpression {
+    fn new() -> VecExpression {
+        VecExpression {
+            nodes: Vec::<Node<VecExpression>>::new(),
+            edges: Vec::<Operation>::new(),
         }
     }
 }
 
-enum FlatExpressionError {
+enum VecExpressionError {
     NoNodes,
-    TooManyOperations,
-    TooFewOperations,
+    TooManyEdges,
+    TooFewEdges,
 }
 
 #[derive(Debug)]
@@ -59,7 +59,7 @@ impl Evaluatable for LinkedExpression {
     }
 }
 
-impl Evaluatable for FlatExpression {
+impl Evaluatable for VecExpression {
     fn evaluate(&self) -> Result<Ratio<u32>, EvaluationError> {
         Ok(Ratio::from_integer(0))
     }
@@ -77,8 +77,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn null_flat_expression() {
-        let mut expression = FlatExpression::new();
+    fn null_vec_expression() {
+        let mut expression = VecExpression::new();
         expression.nodes.push(Node::Number(0));
         assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
     }
