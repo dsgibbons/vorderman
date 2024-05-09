@@ -12,25 +12,25 @@ enum Operation {
 
 struct Edge {
     operation: Operation,
-    operand: Box<NestedExpression>,
+    operand: Box<LinkedExpression>,
 }
 
-enum Node {
+enum Node<T> {
     Number(u32),
-    Expression(Box<NestedExpression>),
+    Expression(Box<T>),
 }
 
-struct NestedExpression(Node, Option<Edge>);
+struct LinkedExpression(Node<LinkedExpression>, Option<Edge>);
 
 struct FlatExpression {
-    numbers: Vec<u32>,
+    nodes: Vec<Node<FlatExpression>>,
     operations: Vec<Operation>,
 }
 
 impl FlatExpression {
     fn new() -> FlatExpression {
         FlatExpression {
-            numbers: Vec::<u32>::new(),
+            nodes: Vec::<Node<FlatExpression>>::new(),
             operations: Vec::<Operation>::new(),
         }
     }
@@ -51,7 +51,7 @@ trait Evaluatable {
     fn evaluate(&self) -> Result<f32, EvaluationError>;
 }
 
-impl Evaluatable for NestedExpression {
+impl Evaluatable for LinkedExpression {
     fn evaluate(&self) -> Result<f32, EvaluationError> {
         Ok(0.0)
     }
@@ -76,13 +76,13 @@ mod tests {
     #[test]
     fn null_flat_expression() {
         let mut expression = FlatExpression::new();
-        expression.numbers.push(0);
+        expression.nodes.push(Node::Number(0));
         assert_eq!(expression.evaluate().unwrap(), 0.0);
     }
 
     #[test]
     fn null_nested_expression() {
-        let expression = NestedExpression(Node::Number(0), None);
+        let expression = LinkedExpression(Node::Number(0), None);
         assert_eq!(expression.evaluate().unwrap(), 0.0);
     }
 }
