@@ -2,7 +2,7 @@ use num::rational::Ratio;
 
 struct NumbersRound {
     numbers: Vec<u32>,
-    target: u32,
+    target: Ratio<u32>,
 }
 
 enum Operation {
@@ -68,6 +68,7 @@ impl Evaluatable for FlatExpression {
 // construct solutions
 // from str method
 // to str method - test that to and from is reversible
+// random generate expressions for testing
 // test solutions can be evaluated
 // DFS for building solutions towards target
 
