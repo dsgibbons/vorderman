@@ -1,4 +1,6 @@
 use num::rational::Ratio;
+use std::fmt;
+use std::str::FromStr;
 
 struct NumbersRound {
     numbers: Vec<u32>,
@@ -12,6 +14,36 @@ enum Operation {
     Divide,
 }
 
+enum OperationError {
+    InvalidOperation,
+}
+
+impl FromStr for Operation {
+    type Err = crate::OperationError;
+
+    fn from_str(input: &str) -> Result<Operation, Self::Err> {
+        match input {
+            "+" => Ok(Operation::Add),
+            "-" => Ok(Operation::Subtract),
+            "*" | "x" => Ok(Operation::Multiply),
+            "/" => Ok(Operation::Divide),
+            _ => Err(OperationError::InvalidOperation),
+        }
+    }
+}
+
+impl fmt::Display for Operation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let character = match self {
+            Operation::Add => "+",
+            Operation::Subtract => "-",
+            Operation::Multiply => "*",
+            Operation::Divide => "/",
+        };
+        write!(f, "{}", character)
+    }
+}
+
 struct Edge {
     operation: Operation,
     operand: Box<LinkedExpression>,
@@ -20,6 +52,21 @@ struct Edge {
 enum Node<T> {
     Number(u32),
     Expression(Box<T>),
+}
+
+impl<T: fmt::Display> fmt::Display for Node<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Node::Number(n) => write!(f, "{}", n),
+            Node::Expression(e) => write!(f, "({})", *e),
+        }
+    }
+}
+
+impl fmt::Display for Edge {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {}", self.operation, self.operand)
+    }
 }
 
 struct LinkedExpression(Node<LinkedExpression>, Option<Edge>);
@@ -38,10 +85,33 @@ impl VecExpression {
     }
 }
 
+impl fmt::Display for VecExpression {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut characters = Vec::new();
+        for (n, e) in self.nodes.iter().zip(self.edges.iter()) {
+            characters.push(n.to_string());
+            characters.push(e.to_string());
+        }
+        characters.push(self.nodes.last().unwrap().to_string());
+
+        write!(f, "{}", characters.join(" "))
+    }
+}
+
+impl fmt::Display for LinkedExpression {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.1 {
+            Some(e) => write!(f, "{} {}", self.0, e),
+            None => write!(f, "{}", self.0),
+        }
+    }
+}
+
 enum VecExpressionError {
     NoNodes,
     TooManyEdges,
     TooFewEdges,
+    ParseError,
 }
 
 #[derive(Debug)]
@@ -84,8 +154,70 @@ mod tests {
     }
 
     #[test]
-    fn null_nested_expression() {
+    fn null_linked_expression() {
         let expression = LinkedExpression(Node::Number(0), None);
         assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
+    }
+
+    #[test]
+    fn vec_expression_to_str() {
+        let nodes = vec![
+            Node::Number(1),
+            Node::Number(2),
+            Node::Number(3),
+            Node::Number(4),
+            Node::Number(5),
+        ];
+        let edges = vec![
+            Operation::Add,
+            Operation::Subtract,
+            Operation::Multiply,
+            Operation::Divide,
+        ];
+        let expr = VecExpression { nodes, edges };
+
+        assert_eq!(expr.to_string(), "1 + 2 - 3 * 4 / 5");
+    }
+
+    #[test]
+    fn nested_vec_expression_to_str() {
+        let inner_nodes = vec![Node::Number(2), Node::Number(3)];
+        let inner_edges = vec![Operation::Subtract];
+        let inner_expr = VecExpression {
+            nodes: inner_nodes,
+            edges: inner_edges,
+        };
+        let outer_nodes = vec![
+            Node::Number(1),
+            Node::Expression(Box::new(inner_expr)),
+            Node::Number(4),
+            Node::Number(5),
+        ];
+        let outer_edges = vec![Operation::Add, Operation::Multiply, Operation::Divide];
+        let expr = VecExpression {
+            nodes: outer_nodes,
+            edges: outer_edges,
+        };
+
+        assert_eq!(expr.to_string(), "1 + (2 - 3) * 4 / 5");
+    }
+
+    #[test]
+    fn linked_expression_to_str() {
+        let expr = LinkedExpression(
+            Node::Number(1),
+            Some(Edge {
+                operation: Operation::Add,
+                operand: Box::new(LinkedExpression(
+                    Node::Number(2),
+                    Some(Edge {
+                        operation: Operation::Subtract,
+                        operand: Box::new(LinkedExpression(Node::Number(3), None)),
+                    }),
+                )),
+            }),
+        );
+
+        assert_eq!(expr.to_string(), "1 + 2 - 3");
     }
 }
