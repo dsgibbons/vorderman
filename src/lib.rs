@@ -136,8 +136,7 @@ impl Evaluatable for VecExpression {
 }
 
 // construct solutions
-// from str method
-// to str method - test that to and from is reversible
+// final to_str test for nested linked expression - then from_str and bidirectional
 // random generate expressions for testing
 // test solutions can be evaluated
 // DFS for building solutions towards target
@@ -148,19 +147,19 @@ mod tests {
 
     #[test]
     fn null_vec_expression() {
-        let mut expression = VecExpression::new();
-        expression.nodes.push(Node::Number(0));
-        assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
+        let mut expr = VecExpression::new();
+        expr.nodes.push(Node::Number(0));
+        assert_eq!(expr.evaluate().unwrap(), Ratio::from_integer(0));
     }
 
     #[test]
     fn null_linked_expression() {
-        let expression = LinkedExpression(Node::Number(0), None);
-        assert_eq!(expression.evaluate().unwrap(), Ratio::from_integer(0));
+        let expr = LinkedExpression(Node::Number(0), None);
+        assert_eq!(expr.evaluate().unwrap(), Ratio::from_integer(0));
     }
 
     #[test]
-    fn vec_expression_to_str() {
+    fn vec_expression_to_string() {
         let nodes = vec![
             Node::Number(1),
             Node::Number(2),
@@ -180,7 +179,7 @@ mod tests {
     }
 
     #[test]
-    fn nested_vec_expression_to_str() {
+    fn nested_vec_expression_to_string() {
         let inner_nodes = vec![Node::Number(2), Node::Number(3)];
         let inner_edges = vec![Operation::Subtract];
         let inner_expr = VecExpression {
@@ -203,7 +202,7 @@ mod tests {
     }
 
     #[test]
-    fn linked_expression_to_str() {
+    fn linked_expression_to_string() {
         let expr = LinkedExpression(
             Node::Number(1),
             Some(Edge {
