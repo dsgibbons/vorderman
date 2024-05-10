@@ -136,7 +136,7 @@ impl Evaluatable for VecExpression {
 }
 
 // construct solutions
-// final to_str test for nested linked expression - then from_str and bidirectional
+// write from_str and bidirectional tests
 // random generate expressions for testing
 // test solutions can be evaluated
 // DFS for building solutions towards target
@@ -218,5 +218,38 @@ mod tests {
         );
 
         assert_eq!(expr.to_string(), "1 + 2 - 3");
+    }
+
+    #[test]
+    fn nested_linked_expression_to_string() {
+        let inner_expr = LinkedExpression(
+            Node::Number(2),
+            Some(Edge {
+                operation: Operation::Subtract,
+                operand: Box::new(LinkedExpression(Node::Number(3), None)),
+            }),
+        );
+
+        let outer_expr = LinkedExpression(
+            Node::Number(1),
+            Some(Edge {
+                operation: Operation::Add,
+                operand: Box::new(LinkedExpression(
+                    Node::Expression(Box::new(inner_expr)),
+                    Some(Edge {
+                        operation: Operation::Multiply,
+                        operand: Box::new(LinkedExpression(
+                            Node::Number(4),
+                            Some(Edge {
+                                operation: Operation::Divide,
+                                operand: Box::new(LinkedExpression(Node::Number(5), None)),
+                            }),
+                        )),
+                    }),
+                )),
+            }),
+        );
+
+        assert_eq!(outer_expr.to_string(), "1 + (2 - 3) * 4 / 5");
     }
 }
