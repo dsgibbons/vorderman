@@ -2,6 +2,8 @@ use num::rational::Ratio;
 use std::fmt;
 use std::str::FromStr;
 
+use regex::Regex;
+
 struct NumbersRound {
     numbers: Vec<u32>,
     target: Ratio<u32>,
@@ -114,6 +116,116 @@ enum VecExpressionError {
     ParseError,
 }
 
+fn clean_string(s: &str) -> String {
+    let re = Regex::new(r"[^0-9+\-*\/x()]").unwrap();
+    re.replace_all(s, "").to_string()
+}
+
+// first char must be numerical or (
+// last char must be numerical or )
+
+// get numerical indices
+// get opening paren indices
+// get closing paren indices
+// get operation indices
+
+// check validity
+// build expression
+
+fn find_next_node<T>(s: &str) -> Result<NextObjectFromStringStart<Node<T>>, ParseExpressionError>
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    let first_char = s.chars().nth(0).unwrap();
+
+    if first_char == '(' {
+        let mut paren_count = 1;
+        for (i, c) in s.char_indices() {
+            if c == ')' {
+                paren_count -= 1;
+            } else if c == '(' {
+                paren_count += 1;
+            }
+            if paren_count == 0 {
+                return Ok(NextObjectFromStringStart {
+                    object: Node::Expression(Box::new(T::from_str(&s[..i]).unwrap())),
+                    n_chars: i,
+                });
+            }
+        }
+    } else if !first_char.is_digit(10) && first_char != ' ' {
+        return Err(ParseExpressionError::InvalidCharacter(first_char, 0));
+    }
+
+    for (i, c) in s.char_indices() {
+        if !c.is_digit(10) {
+            return Ok(NextObjectFromStringStart {
+                object: Node::Number(s[..i].parse().unwrap()),
+                n_chars: i,
+            });
+        }
+    }
+
+    Ok(NextObjectFromStringStart {
+        object: Node::Number(s.parse().unwrap()),
+        n_chars: s.len(),
+    })
+}
+
+fn find_next_operation(
+    s: &str,
+) -> Result<NextObjectFromStringStart<Operation>, ParseExpressionError> {
+    Ok(NextObjectFromStringStart {
+        object: Operation::Add,
+        n_chars: 1,
+    })
+}
+
+struct NextObjectFromStringStart<T> {
+    object: T,
+    n_chars: usize,
+}
+
+#[derive(Debug)]
+enum ParseExpressionError {
+    NotEnoughNodes,
+    TooManyNodes,
+    NotEnoughOperations,
+    TooManyOperations,
+    InvalidCharacter(char, usize),
+}
+
+// fn get_strings_in_outer_parentheses(s: &str)
+
+impl FromStr for VecExpression {
+    type Err = crate::ParseExpressionError;
+
+    fn from_str(input: &str) -> Result<VecExpression, Self::Err> {
+        let mut next_index = 0;
+        let next_node: NextObjectFromStringStart<Node<VecExpression>>;
+        let next_operation: NextObjectFromStringStart<Operation>;
+
+        let mut result = VecExpression::new();
+
+        next_node = find_next_node(&input[next_index..]).unwrap();
+        result.nodes.push(next_node.object);
+        next_index += next_node.n_chars;
+
+        if next_index != input.len() {
+            next_operation = find_next_operation(&input[next_index..]).unwrap();
+            result.edges.push(next_operation.object);
+            next_index += next_operation.n_chars;
+
+            if next_index == input.len() {
+                return Err(ParseExpressionError::NotEnoughOperations);
+            };
+        };
+
+        Ok(result)
+    }
+}
+
 #[derive(Debug)]
 enum EvaluationError {
     GenericError,
@@ -156,6 +268,14 @@ mod tests {
     fn null_linked_expression() {
         let expr = LinkedExpression(Node::Number(0), None);
         assert_eq!(expr.evaluate().unwrap(), Ratio::from_integer(0));
+    }
+
+    #[test]
+    fn clean_string() {
+        assert_eq!(
+            super::clean_string("1 .. s 2 x 4* (23+ 9) 1 2 -12+(0 )&ujq  "),
+            "12x4*(23+9)12-12+(0)"
+        );
     }
 
     #[test]
@@ -251,5 +371,10 @@ mod tests {
         );
 
         assert_eq!(outer_expr.to_string(), "1 + (2 - 3) * 4 / 5");
+    }
+
+    #[test]
+    fn vec_expr_from_and_to_str() {
+        assert_eq!(VecExpression::from_str("123").unwrap().to_string(), "123")
     }
 }
