@@ -17,4 +17,4 @@ jobs:
           rust-version: stable
       - run: cargo test --verbose --workspace --all-features
       - run: cargo test --verbose --workspace --no-default-features
-      - run: cargo fmt -- --check"
+      - run: cargo fmt -- --check
