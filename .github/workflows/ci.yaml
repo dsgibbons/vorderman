@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-format:
+    name: Test and format Rust code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+      - run: cargo test --verbose --workspace --all-features
+      - run: cargo test --verbose --workspace --no-default-features
+      - run: cargo fmt -- --check"
