@@ -36,16 +36,13 @@ impl FromStr for LinkedExpression {
         let input = input.trim();
 
         let mut next_index = 0;
-        let mut next_operand: parse::NextObjectFromStringStart<Operand<LinkedExpression>>;
-        let mut next_operation: parse::NextObjectFromStringStart<Operation>;
 
         let next_operand = parse::find_next_operand(&input[next_index..]).unwrap();
-
         next_index += next_operand.end_char_index + 1;
 
         let edge: Option<Edge>;
         if next_index < input.len() - 1 {
-            next_operation = parse::find_next_operation(&input[next_index..]).unwrap();
+            let next_operation = parse::find_next_operation(&input[next_index..]).unwrap();
             next_index += next_operation.end_char_index + 1;
             if next_index == input.len() {
                 return Err(parse::ParseExpressionError::NotEnoughOperations);
