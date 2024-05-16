@@ -37,25 +37,25 @@ impl FromStr for LinkedExpression {
 
         let mut next_index = 0;
 
-        let next_operand = parse::find_next_operand(&input[next_index..]).unwrap();
-        next_index += next_operand.end_char_index + 1;
+        let next_node = parse::find_next_operand(&input[next_index..]).unwrap();
+        next_index += next_node.end_char_index + 1;
 
         let edge: Option<Edge>;
         if next_index < input.len() - 1 {
-            let next_operation = parse::find_next_operation(&input[next_index..]).unwrap();
-            next_index += next_operation.end_char_index + 1;
+            let next_edge = parse::find_next_operation(&input[next_index..]).unwrap();
+            next_index += next_edge.end_char_index + 1;
             if next_index == input.len() {
                 return Err(parse::ParseExpressionError::NotEnoughOperations);
             };
             edge = Some(Edge {
-                operation: next_operation.object,
+                operation: next_edge.object,
                 operand: Box::new(LinkedExpression::from_str(&input[next_index..]).unwrap()),
             });
         } else {
             edge = None;
         }
 
-        Ok(LinkedExpression(next_operand.object, edge))
+        Ok(LinkedExpression(next_node.object, edge))
     }
 }
 
