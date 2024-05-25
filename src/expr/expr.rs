@@ -75,7 +75,7 @@ impl TryFrom<char> for Parenthesis {
 }
 
 #[derive(Debug, PartialEq)]
-enum Token {
+pub enum Token {
     Number(u32),
     Operation(Operation),
     Parenthesis(Parenthesis),
@@ -92,7 +92,7 @@ impl fmt::Display for Token {
 }
 
 #[derive(Debug, PartialEq)]
-struct Expression(Vec<Token>);
+pub struct Expression(pub Vec<Token>);
 
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -144,15 +144,22 @@ impl FromStr for Expression {
     }
 }
 
-enum Fix {
-    Prefix,
-    Infix,
-    Postfix,
+#[derive(Debug, PartialEq)]
+pub enum Fix {
+    Pre,
+    In,
+    Post,
 }
 
-struct FixExpression {
-    expression: Expression,
-    fix: Fix,
+#[derive(Debug, PartialEq)]
+pub struct FixExpression {
+    pub expression: Expression,
+    pub fix: Fix,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum FixExpressionError {
+    InvalidFixExpression,
 }
 
 fn validate_prefix(expression: &Expression) -> bool {
@@ -167,7 +174,9 @@ fn validate_prefix(expression: &Expression) -> bool {
             }
             Token::Number(_) => {
                 num_count += 1;
-                if op_count == 0 || num_count > op_count + 1 {
+                if expression.0.len() == 1 {
+                    return true
+                } else if op_count == 0 || num_count > op_count + 1 {
                     return false;
                 }
             }
@@ -212,10 +221,20 @@ fn validate_postfix(expression: &Expression) -> bool {
 impl FixExpression {
     fn validate(&self) -> bool {
         match self.fix {
-            Fix::Prefix => validate_prefix(&self.expression),
-            Fix::Infix => validate_infix(&self.expression),
-            Fix::Postfix => validate_postfix(&self.expression),
+            Fix::Pre => validate_prefix(&self.expression),
+            Fix::In => validate_infix(&self.expression),
+            Fix::Post => validate_postfix(&self.expression),
         }
+    }
+
+    pub fn as_prefix(&self) -> Result<&FixExpression, FixExpressionError> {
+        if self.fix == Fix::Pre && self.validate() {
+            return Ok(self);
+        }
+
+        panic!("Not implemented yet");
+
+        Err(FixExpressionError::InvalidFixExpression)
     }
 }
 
@@ -254,6 +273,7 @@ mod tests {
         );
     }
 
+    #[test_case("1", true; "single number")]
     #[test_case("+ 1 2", true; "simple addition")]
     #[test_case("+ 12 34", true; "double digit addition")]
     #[test_case("* 1 - 2 3", true; "nested operation")]
@@ -265,13 +285,14 @@ mod tests {
         assert_eq!(
             FixExpression {
                 expression: Expression::from_str(input).unwrap(),
-                fix: Fix::Prefix
+                fix: Fix::Pre
             }
             .validate(),
             expected,
         );
     }
 
+    #[test_case("1", true; "single number")]
     #[test_case("1 2 +", true; "simple addition")]
     #[test_case("12 34 +", true; "double digit addition")]
     #[test_case("1 2 3 - *", true; "nested operation")]
@@ -283,10 +304,11 @@ mod tests {
         assert_eq!(
             FixExpression {
                 expression: Expression::from_str(input).unwrap(),
-                fix: Fix::Postfix
+                fix: Fix::Post
             }
             .validate(),
             expected,
         );
     }
+
 }
