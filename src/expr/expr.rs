@@ -175,7 +175,7 @@ fn validate_prefix(expression: &Expression) -> bool {
             Token::Number(_) => {
                 num_count += 1;
                 if expression.0.len() == 1 {
-                    return true
+                    return true;
                 } else if op_count == 0 || num_count > op_count + 1 {
                     return false;
                 }
@@ -310,5 +310,4 @@ mod tests {
             expected,
         );
     }
-
 }

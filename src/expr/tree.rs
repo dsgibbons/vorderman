@@ -1,12 +1,5 @@
+use super::expr::{Expression, Fix, FixExpression, FixExpressionError, Operation, Token};
 use num::rational::Ratio;
-use super::expr::{
-    Expression, 
-    Fix,
-    FixExpression, 
-    FixExpressionError, 
-    Operation, 
-    Token, 
-};
 
 enum ExpressionTree {
     Lit(u32),
