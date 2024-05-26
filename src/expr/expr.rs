@@ -246,7 +246,7 @@ mod tests {
     #[test_case("1+2", vec![Token::Number(1), Token::Operation(Operation::Add), Token::Number(2)]; "simple addition")]
     #[test_case("12 + 34", vec![Token::Number(12), Token::Operation(Operation::Add), Token::Number(34)]; "double digit addition")]
     #[test_case("1  *(2 -3) ", vec![Token::Number(1), Token::Operation(Operation::Multiply), Token::Parenthesis(Parenthesis::Open), Token::Number(2), Token::Operation(Operation::Subtract), Token::Number(3), Token::Parenthesis(Parenthesis::Close)]; "nested operation with unusual spacing")]
-    #[test_case("12 *(345/ 6789)", vec![Token::Number(12), Token::Operation(Operation::Multiply), Token::Parenthesis(Parenthesis::Open), Token::Number(345), Token::Operation(Operation::Divide), Token::Number(6789), Token::Parenthesis(Parenthesis::Close)] ; "another nested operation with unusual spacing")]
+    #[test_case("12 *(345/ 6789)", vec![Token::Number(12), Token::Operation(Operation::Multiply), Token::Parenthesis(Parenthesis::Open), Token::Number(345), Token::Operation(Operation::Divide), Token::Number(6789), Token::Parenthesis(Parenthesis::Close)]; "another nested operation with unusual spacing")]
     #[test_case("1 23  345 +  + ", vec![Token::Number(1), Token::Number(23), Token::Number(345), Token::Operation(Operation::Add), Token::Operation(Operation::Add)]; "example postfix expression")]
     fn expr_from_str_tests(input: &str, tokens: Vec<Token>) {
         assert_eq!(Expression::from_str(input).unwrap(), Expression(tokens));
@@ -262,10 +262,10 @@ mod tests {
     }
 
     #[test_case("1+2", "1 + 2"; "simple addition")]
-    #[test_case("12 + 34", "12 + 34"  ; "double digit addition")]
-    #[test_case("1  *(2 -3) ", "1 * ( 2 - 3 )"  ; "nested operation with unusual spacing")]
-    #[test_case("12 *(345/ 6789)  ", "12 * ( 345 / 6789 )"  ; "another nested operation with unusual spacing")]
-    #[test_case("1 23  345 + + ", "1 23 345 + +"  ; "example postfix expression")]
+    #[test_case("12 + 34", "12 + 34"; "double digit addition")]
+    #[test_case("1  *(2 -3) ", "1 * ( 2 - 3 )"; "nested operation with unusual spacing")]
+    #[test_case("12 *(345/ 6789)  ", "12 * ( 345 / 6789 )"; "another nested operation with unusual spacing")]
+    #[test_case("1 23  345 + + ", "1 23 345 + +"; "example postfix expression")]
     fn expr_to_str_tests(input: &str, expected: &str) {
         assert_eq!(
             Expression::from_str(input).unwrap().to_string(),

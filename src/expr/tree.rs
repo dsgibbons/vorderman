@@ -69,6 +69,54 @@ impl ExpressionTree {
             ExpressionTree::Divide(lhs, rhs) => lhs.evaluate() / rhs.evaluate(),
         }
     }
+
+    fn as_tokens(&self) -> Vec<Token> {
+        let mut tokens = Vec::<Token>::new();
+
+        let (t, lhs, rhs) = match self {
+            ExpressionTree::Lit(n) => {
+                tokens.push(Token::Number(*n));
+                return tokens;
+            }
+            ExpressionTree::Add(l, r) => (
+                Token::Operation(Operation::Add),
+                l.as_tokens(),
+                r.as_tokens(),
+            ),
+            ExpressionTree::Subtract(l, r) => (
+                Token::Operation(Operation::Subtract),
+                l.as_tokens(),
+                r.as_tokens(),
+            ),
+            ExpressionTree::Multiply(l, r) => (
+                Token::Operation(Operation::Multiply),
+                l.as_tokens(),
+                r.as_tokens(),
+            ),
+            ExpressionTree::Divide(l, r) => (
+                Token::Operation(Operation::Divide),
+                l.as_tokens(),
+                r.as_tokens(),
+            ),
+        };
+
+        tokens.push(t);
+        tokens.extend(lhs);
+        tokens.extend(rhs);
+
+        tokens
+    }
+}
+
+impl From<ExpressionTree> for FixExpression {
+    fn from(value: ExpressionTree) -> Self {
+        let tokens = value.as_tokens();
+
+        FixExpression {
+            expression: Expression(tokens),
+            fix: Fix::Pre,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -91,5 +139,21 @@ mod tests {
         };
         let expr_tree = ExpressionTree::try_from(prefix_expr).unwrap();
         assert_eq!(expr_tree.evaluate(), expected)
+    }
+
+    #[test_case("1"; "single number")]
+    #[test_case("+ 1 2"; "simple addition")]
+    #[test_case("+ 12 34"; "double digit addition")]
+    #[test_case("* 1 - 2 3"; "nested operation")]
+    #[test_case("* 12 / 345 6789"; "another nested operation")]
+    #[test_case("/ / + 3 + 7 * 2 2 2 2"; "long expression")]
+    #[test_case("- * 12 / / + 3 + 7 * 2 2 2 2 / 9 4"; "another long expression")]
+    fn e2e_str_tests(input: &str) {
+        let prefix_expr = FixExpression {
+            expression: Expression::from_str(input).unwrap(),
+            fix: Fix::Pre,
+        };
+        let expr_tree = ExpressionTree::try_from(prefix_expr).unwrap();
+        assert_eq!(FixExpression::from(expr_tree).expression.to_string(), input)
     }
 }
