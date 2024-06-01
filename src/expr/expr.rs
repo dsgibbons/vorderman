@@ -10,7 +10,7 @@ pub enum LexError {
     InvalidCharacterAtIndex(usize, char),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Operation {
     Add,
     Subtract,
@@ -76,7 +76,7 @@ impl TryFrom<char> for Parenthesis {
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    Number(u32),
+    Number(usize),
     Operation(Operation),
     Parenthesis(Parenthesis),
 }
@@ -91,7 +91,7 @@ impl fmt::Display for Token {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Expression(pub Vec<Token>);
 
 impl fmt::Display for Expression {

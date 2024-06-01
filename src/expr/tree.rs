@@ -1,22 +1,22 @@
 use super::expr::{Expression, Fix, FixExpression, FixExpressionError, Operation, Token};
 use num::rational::Ratio;
 
-enum ExpressionTree {
-    Lit(u32),
+pub enum ExpressionTree {
+    Lit(usize),
     Add(Box<ExpressionTree>, Box<ExpressionTree>),
     Subtract(Box<ExpressionTree>, Box<ExpressionTree>),
     Multiply(Box<ExpressionTree>, Box<ExpressionTree>),
     Divide(Box<ExpressionTree>, Box<ExpressionTree>),
 }
 
-struct PartialExpressionTree {
-    tree: ExpressionTree,
-    size: usize,
+pub struct SizedExpressionTree {
+    pub tree: ExpressionTree,
+    pub size: usize,
 }
 
-fn parse(tokens: &[Token]) -> PartialExpressionTree {
+fn parse(tokens: &[Token]) -> SizedExpressionTree {
     if let Token::Number(n) = tokens[0] {
-        return PartialExpressionTree {
+        return SizedExpressionTree {
             tree: ExpressionTree::Lit(n),
             size: 1,
         };
@@ -42,7 +42,7 @@ fn parse(tokens: &[Token]) -> PartialExpressionTree {
         _ => panic!("Unexpected token encountered"),
     };
 
-    PartialExpressionTree {
+    SizedExpressionTree {
         tree,
         size: 1 + lhs.size + rhs.size,
     }
@@ -60,7 +60,7 @@ impl TryFrom<FixExpression> for ExpressionTree {
 }
 
 impl ExpressionTree {
-    fn evaluate(&self) -> Ratio<i32> {
+    pub fn evaluate(&self) -> Ratio<i32> {
         match self {
             ExpressionTree::Lit(n) => Ratio::<i32>::from_integer((*n).try_into().unwrap()),
             ExpressionTree::Add(lhs, rhs) => lhs.evaluate() + rhs.evaluate(),
