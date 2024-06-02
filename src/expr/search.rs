@@ -1,24 +1,25 @@
 use super::expr::{Expression, Fix, FixExpression, Operation, Token};
 use num::rational::Ratio;
-use std::collections::{BinaryHeap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashSet};
 use std::iter::{repeat, zip};
+use std::str::FromStr;
 
 struct NumbersRound {
     numbers: HashSet<usize>,
     target: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct PartialSolution {
     expression: Expression,
-    stack: Vec<Ratio<usize>>,
+    stack: Vec<Ratio<isize>>,
     remaining: HashSet<usize>,
 }
 
 impl PartialSolution {
     fn new(numbers: &HashSet<usize>) -> PartialSolution {
-        let mut tokens = Vec::<Token>::new();
-        let mut stack = Vec::<Ratio<usize>>::new();
+        let tokens = Vec::<Token>::new();
+        let stack = Vec::<Ratio<isize>>::new();
         PartialSolution {
             expression: Expression(tokens),
             stack,
@@ -27,82 +28,18 @@ impl PartialSolution {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
-struct Item<T: PartialEq> {
-    priority: usize,
-    value: T,
-}
+#[derive(PartialEq, Debug, Eq)]
+struct PrioritizedPartialSolution(usize, Box<PartialSolution>);
 
-impl<T: Eq> PartialOrd for Item<T> {
+impl PartialOrd for PrioritizedPartialSolution {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T: Eq> Ord for Item<T> {
+impl Ord for PrioritizedPartialSolution {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.priority.cmp(&other.priority)
-    }
-}
-
-trait PriorityQueue {
-    type V: Eq;
-
-    fn insert(&mut self, item: Item<Self::V>) -> ();
-
-    fn pop(&mut self) -> Item<Self::V>;
-
-    fn peek(&self) -> &Item<Self::V>;
-}
-
-type Stack<T> = Vec<Item<T>>;
-type Queue<T> = VecDeque<Item<T>>;
-
-impl<T: Eq> PriorityQueue for Stack<T> {
-    type V = T;
-
-    fn insert(&mut self, item: Item<Self::V>) -> () {
-        self.push(item);
-    }
-
-    fn pop(&mut self) -> Item<Self::V> {
-        self.pop().unwrap()
-    }
-
-    fn peek(&self) -> &Item<Self::V> {
-        self.last().unwrap()
-    }
-}
-
-impl<T: Eq> PriorityQueue for Queue<T> {
-    type V = T;
-
-    fn insert(&mut self, item: Item<Self::V>) -> () {
-        self.push_front(item);
-    }
-
-    fn pop(&mut self) -> Item<Self::V> {
-        self.pop_back().unwrap()
-    }
-
-    fn peek(&self) -> &Item<Self::V> {
-        self.back().unwrap()
-    }
-}
-
-impl<T: Eq> PriorityQueue for BinaryHeap<Item<T>> {
-    type V = T;
-
-    fn insert(&mut self, item: Item<Self::V>) -> () {
-        self.push(item);
-    }
-
-    fn pop(&mut self) -> Item<Self::V> {
-        self.pop().unwrap()
-    }
-
-    fn peek(&self) -> &Item<Self::V> {
-        self.peek().unwrap()
+        self.0.cmp(&other.0)
     }
 }
 
@@ -113,51 +50,126 @@ const OPERATIONS: [Operation; 4] = [
     Operation::Divide,
 ];
 
-fn branch(partial: PartialSolution, target: usize) -> Option<Vec<PartialSolution>> {
-    if partial.remaining.len() == 0 {
-        return None;
-    }
-
+fn get_options(partial: &PartialSolution) -> Vec<Token> {
+    // Populate options to append to end of current partial solution
     let mut options = Vec::<Token>::new();
 
+    // Remaining numbers
     for r in partial.remaining.iter() {
         options.push(Token::Number(*r));
     }
 
-    if partial.expression.0.len() > 2 {
-        for op in OPERATIONS.iter() {
-            options.push(Token::Operation(*op))
+    // All operations if at least two numbers on the stack
+    if partial.stack.len() >= 2 {
+        options.push(Token::Operation(Operation::Add));
+        options.push(Token::Operation(Operation::Subtract));
+        options.push(Token::Operation(Operation::Multiply));
+
+        if *partial.stack.last().unwrap() != Ratio::<isize>::from_integer(0) {
+            options.push(Token::Operation(Operation::Divide));
         }
     }
 
-    let mut new_partials: Vec<_> = repeat(partial).take(options.len()).collect();
+    options
+}
 
-    // TODO: stack compute and update remaining before pushing partial solution
-    for (p, o) in zip(new_partials, options) {
-        match o {
-            Token::Number(n) => new_partials,
+fn create_new_partial_solution(old: &PartialSolution, token: &Token) -> Box<PartialSolution> {
+    let PartialSolution {
+        mut expression,
+        mut stack,
+        mut remaining,
+    } = old.clone();
+
+    match token {
+        Token::Number(n) => {
+            stack.push(Ratio::<isize>::from_integer((*n).try_into().unwrap()));
+            remaining.remove(&n);
         }
+        Token::Operation(op) => {
+            let last_num = stack.pop().unwrap();
+            let first_num = stack.pop().unwrap();
 
-        new_partials.push(o);
+            let result = match op {
+                Operation::Add => first_num + last_num,
+                Operation::Subtract => first_num - last_num,
+                Operation::Multiply => first_num * last_num,
+                Operation::Divide => first_num / last_num,
+            };
+
+            stack.push(result);
+        }
+        Token::Parenthesis(_) => panic!("Unexpected parenthesis token found."),
     }
 
-    Some(new_partials)
+    expression.0.push(*token);
+
+    Box::new(PartialSolution {
+        expression,
+        stack,
+        remaining,
+    })
+}
+
+fn branch(partial_solution: &PartialSolution) -> Option<Vec<Box<PartialSolution>>> {
+    if partial_solution.remaining.len() == 0 && partial_solution.stack.len() == 1 {
+        return None;
+    }
+
+    let mut new_partial_solutons = Vec::<Box<PartialSolution>>::new();
+    for token in get_options(&partial_solution) {
+        new_partial_solutons.push(create_new_partial_solution(&partial_solution, &token));
+    }
+    Some(new_partial_solutons)
 }
 
 fn search(config: NumbersRound) -> Option<FixExpression> {
-    let target = Ratio::<usize>::from_integer(config.target.try_into().unwrap());
-    let partial_solution = PartialSolution::new(&config.numbers);
+    let target = Ratio::<isize>::from_integer(config.target.try_into().unwrap());
 
-    while let Some(partial_solutions) = branch(partial_solution, config.target) {
-        for partial in partial_solutions.iter() {
-            if partial.stack.len() == 1 && *partial.stack.first().unwrap() == target {
-                return Some(FixExpression {
-                    expression: partial.expression,
-                    fix: Fix::Post,
-                });
+    let mut priority_queue = BinaryHeap::<PrioritizedPartialSolution>::new();
+    priority_queue.push(PrioritizedPartialSolution(
+        1,
+        Box::new(PartialSolution::new(&config.numbers)),
+    ));
+
+    while let Some(PrioritizedPartialSolution(priority, partial_solution)) = priority_queue.pop() {
+        if let Some(new_partial_solutions) = branch(&partial_solution) {
+            for new_partial_solution in new_partial_solutions.iter() {
+                if new_partial_solution.stack.len() == 1
+                    && *new_partial_solution.stack.first().unwrap() == target
+                {
+                    return Some(FixExpression {
+                        expression: new_partial_solution.expression.clone(),
+                        fix: Fix::Post,
+                    });
+                }
+                let priority = 1;
+                priority_queue.push(PrioritizedPartialSolution(
+                    priority,
+                    new_partial_solution.clone(),
+                )); // how can clone be avoided here?
             }
         }
     }
-
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(3, vec![1, 2], "1 2 +"; "simple")]
+    #[test_case(321, vec![1, 2, 3, 5, 10, 100], "1 2 +"; "harder")]
+    fn valid_numbers_round(target: usize, numbers: Vec<usize>, expected: &str) {
+        let expected = FixExpression {
+            expression: Expression::from_str(expected).unwrap(),
+            fix: Fix::Post,
+        };
+        let solution = search(NumbersRound {
+            numbers: HashSet::from_iter(numbers),
+            target,
+        });
+
+        assert_eq!(solution, Some(expected));
+    }
 }
