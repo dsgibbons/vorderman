@@ -12,14 +12,14 @@ struct NumbersRound {
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct PartialSolution {
     expression: Expression,
-    stack: Vec<Ratio<isize>>,
+    stack: Vec<Ratio<usize>>,
     remaining: HashSet<usize>,
 }
 
 impl PartialSolution {
     fn new(numbers: &HashSet<usize>) -> PartialSolution {
         let tokens = Vec::<Token>::new();
-        let stack = Vec::<Ratio<isize>>::new();
+        let stack = Vec::<Ratio<usize>>::new();
         PartialSolution {
             expression: Expression(tokens),
             stack,
@@ -61,11 +61,16 @@ fn get_options(partial: &PartialSolution) -> Vec<Token> {
 
     // All operations if at least two numbers on the stack
     if partial.stack.len() >= 2 {
-        options.push(Token::Operation(Operation::Add));
-        options.push(Token::Operation(Operation::Subtract));
-        options.push(Token::Operation(Operation::Multiply));
+        let first_num = &partial.stack[partial.stack.len() - 2];
+        let second_num = partial.stack.last().unwrap();
 
-        if *partial.stack.last().unwrap() != Ratio::<isize>::from_integer(0) {
+        if first_num >= second_num {
+            options.push(Token::Operation(Operation::Add));
+            options.push(Token::Operation(Operation::Subtract));
+            options.push(Token::Operation(Operation::Multiply));
+        }
+
+        if *partial.stack.last().unwrap() != Ratio::<usize>::from_integer(0) {
             options.push(Token::Operation(Operation::Divide));
         }
     }
@@ -82,7 +87,7 @@ fn create_new_partial_solution(old: &PartialSolution, token: &Token) -> Box<Part
 
     match token {
         Token::Number(n) => {
-            stack.push(Ratio::<isize>::from_integer((*n).try_into().unwrap()));
+            stack.push(Ratio::<usize>::from_integer((*n).try_into().unwrap()));
             remaining.remove(&n);
         }
         Token::Operation(op) => {
@@ -123,7 +128,7 @@ fn branch(partial_solution: &PartialSolution) -> Option<Vec<Box<PartialSolution>
 }
 
 pub fn search(config: NumbersRound) -> Option<PostfixExpression> {
-    let target = Ratio::<isize>::from_integer(config.target.try_into().unwrap());
+    let target = Ratio::<usize>::from_integer(config.target.try_into().unwrap());
 
     let mut priority_queue = BinaryHeap::<PrioritizedPartialSolution>::new();
     priority_queue.push(PrioritizedPartialSolution(
