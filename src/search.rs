@@ -122,7 +122,7 @@ fn branch(partial_solution: &PartialSolution) -> Option<Vec<Box<PartialSolution>
     Some(new_partial_solutons)
 }
 
-fn search(config: NumbersRound) -> Option<PostfixExpression> {
+pub fn search(config: NumbersRound) -> Option<PostfixExpression> {
     let target = Ratio::<isize>::from_integer(config.target.try_into().unwrap());
 
     let mut priority_queue = BinaryHeap::<PrioritizedPartialSolution>::new();
