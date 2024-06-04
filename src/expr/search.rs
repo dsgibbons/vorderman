@@ -1,4 +1,4 @@
-use super::expr::{Expression, Fix, FixExpression, Operation, Token};
+use super::expr::{Expression, Operation, PostfixExpression, Token};
 use num::rational::Ratio;
 use std::collections::{BinaryHeap, HashSet};
 use std::iter::{repeat, zip};
@@ -122,7 +122,7 @@ fn branch(partial_solution: &PartialSolution) -> Option<Vec<Box<PartialSolution>
     Some(new_partial_solutons)
 }
 
-fn search(config: NumbersRound) -> Option<FixExpression> {
+fn search(config: NumbersRound) -> Option<PostfixExpression> {
     let target = Ratio::<isize>::from_integer(config.target.try_into().unwrap());
 
     let mut priority_queue = BinaryHeap::<PrioritizedPartialSolution>::new();
@@ -137,16 +137,13 @@ fn search(config: NumbersRound) -> Option<FixExpression> {
                 if new_partial_solution.stack.len() == 1
                     && *new_partial_solution.stack.first().unwrap() == target
                 {
-                    return Some(FixExpression {
-                        expression: new_partial_solution.expression.clone(),
-                        fix: Fix::Post,
-                    });
+                    return Some(PostfixExpression(new_partial_solution.expression.clone()));
                 }
                 let priority = 1;
                 priority_queue.push(PrioritizedPartialSolution(
                     priority,
                     new_partial_solution.clone(),
-                )); // how can clone be avoided here?
+                )); // TODO: how can clone be avoided here?
             }
         }
     }
@@ -158,18 +155,31 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(3, vec![1, 2], "1 2 +"; "simple")]
-    #[test_case(321, vec![1, 2, 3, 5, 10, 100], "1 2 +"; "harder")]
-    fn valid_numbers_round(target: usize, numbers: Vec<usize>, expected: &str) {
-        let expected = FixExpression {
-            expression: Expression::from_str(expected).unwrap(),
-            fix: Fix::Post,
-        };
+    // TODO: make tests not flaky
+    #[test_case(3, vec![1, 2] ; "simple")]
+    #[test_case(321, vec![1, 2, 3, 5, 10, 100] ; "medium")]
+    #[test_case(813, vec![1, 10, 25, 50, 75, 100] ; "hard")]
+    #[test_case(952, vec![3, 6, 25, 50, 75, 100] ; "another hard")]
+    fn valid_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
             numbers: HashSet::from_iter(numbers),
             target,
         });
 
-        assert_eq!(solution, Some(expected));
+        assert_eq!(
+            solution.unwrap().evaluate().unwrap(),
+            Ratio::<isize>::from_integer(target.try_into().unwrap())
+        );
+    }
+
+    #[test_case(30, vec![1, 2] ; "simple")]
+    #[test_case(3000, vec![2, 3, 5, 10] ; "harder")]
+    fn impossible_numbers_round(target: usize, numbers: Vec<usize>) {
+        let solution = search(NumbersRound {
+            numbers: HashSet::from_iter(numbers),
+            target,
+        });
+
+        assert!(solution.is_none(),);
     }
 }

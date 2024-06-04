@@ -2,6 +2,8 @@ use std::fmt;
 use std::str::FromStr;
 use std::vec::Vec;
 
+use num::rational::Ratio;
+
 const BASE: u32 = 10;
 
 #[derive(Debug, PartialEq)]
@@ -145,96 +147,76 @@ impl FromStr for Expression {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Fix {
-    Pre,
-    In,
-    Post,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct FixExpression {
-    pub expression: Expression,
-    pub fix: Fix,
-}
-
-#[derive(Debug, PartialEq)]
 pub enum FixExpressionError {
     InvalidFixExpression,
 }
 
-fn validate_prefix(expression: &Expression) -> bool {
-    let mut op_count = 0;
-    let mut num_count = 0;
+struct InfixExpression(Expression);
 
-    for token in &expression.0 {
-        match token {
-            Token::Parenthesis(_) => return false,
-            Token::Operation(_) => {
-                op_count += 1;
-            }
-            Token::Number(_) => {
-                num_count += 1;
-                if expression.0.len() == 1 {
-                    return true;
-                } else if op_count == 0 || num_count > op_count + 1 {
-                    return false;
-                }
-            }
-        }
-    }
-    if op_count != num_count - 1 {
-        false
-    } else {
-        true
+impl From<PostfixExpression> for InfixExpression {
+    fn from(postfix: PostfixExpression) -> Self {
+        panic!("Not implemented yet")
     }
 }
 
-fn validate_infix(expression: &Expression) -> bool {
-    panic!("Not implemented yet")
-}
+pub struct PostfixExpression(pub Expression);
 
-fn validate_postfix(expression: &Expression) -> bool {
-    let mut op_count = 0;
-    let mut num_count = 0;
-
-    for token in &expression.0 {
-        match token {
-            Token::Parenthesis(_) => return false,
-            Token::Operation(_) => {
-                op_count += 1;
-                if num_count <= op_count {
-                    return false;
-                }
-            }
-            Token::Number(_) => {
-                num_count += 1;
-            }
-        }
-    }
-    if op_count != num_count - 1 {
-        false
-    } else {
-        true
-    }
-}
-
-impl FixExpression {
+impl PostfixExpression {
     fn validate(&self) -> bool {
-        match self.fix {
-            Fix::Pre => validate_prefix(&self.expression),
-            Fix::In => validate_infix(&self.expression),
-            Fix::Post => validate_postfix(&self.expression),
+        let mut op_count = 0;
+        let mut num_count = 0;
+
+        for token in &self.0 .0 {
+            match token {
+                Token::Parenthesis(_) => return false,
+                Token::Operation(_) => {
+                    op_count += 1;
+                    if num_count <= op_count {
+                        return false;
+                    }
+                }
+                Token::Number(_) => {
+                    num_count += 1;
+                }
+            }
+        }
+        if op_count != num_count - 1 {
+            false
+        } else {
+            true
         }
     }
 
-    pub fn as_prefix(&self) -> Result<&FixExpression, FixExpressionError> {
-        if self.fix == Fix::Pre && self.validate() {
-            return Ok(self);
+    pub fn evaluate(&self) -> Result<Ratio<isize>, FixExpressionError> {
+        if !self.validate() {
+            return Err(FixExpressionError::InvalidFixExpression);
         }
 
-        panic!("Not implemented yet");
+        let mut stack = Vec::<Ratio<isize>>::new();
 
-        Err(FixExpressionError::InvalidFixExpression)
+        for token in self.0 .0.iter() {
+            match token {
+                Token::Number(n) => {
+                    stack.push(Ratio::<isize>::from_integer((*n).try_into().unwrap()));
+                }
+                Token::Operation(op) => {
+                    let last_num = stack.pop().unwrap();
+                    let first_num = stack.pop().unwrap();
+
+                    let result = match op {
+                        Operation::Add => first_num + last_num,
+                        Operation::Subtract => first_num - last_num,
+                        Operation::Multiply => first_num * last_num,
+                        Operation::Divide => first_num / last_num,
+                    };
+
+                    stack.push(result);
+                }
+                Token::Parenthesis(_) => panic!("Unexpected parenthesis token found."),
+            }
+        }
+
+        Ok(stack.first().unwrap().clone())
     }
 }
 
@@ -274,25 +256,6 @@ mod tests {
     }
 
     #[test_case("1", true; "single number")]
-    #[test_case("+ 1 2", true; "simple addition")]
-    #[test_case("+ 12 34", true; "double digit addition")]
-    #[test_case("* 1 - 2 3", true; "nested operation")]
-    #[test_case("* 12 / 345 6789", true; "another nested operation")]
-    #[test_case("1 23 345 + +", false; "postfix expression")]
-    #[test_case("1 * 2 - 3", false; "simple infix expression")]
-    #[test_case("1 * (2 - 3)", false; "nested infix expression")]
-    fn validate_prefix_tests(input: &str, expected: bool) {
-        assert_eq!(
-            FixExpression {
-                expression: Expression::from_str(input).unwrap(),
-                fix: Fix::Pre
-            }
-            .validate(),
-            expected,
-        );
-    }
-
-    #[test_case("1", true; "single number")]
     #[test_case("1 2 +", true; "simple addition")]
     #[test_case("12 34 +", true; "double digit addition")]
     #[test_case("1 2 3 - *", true; "nested operation")]
@@ -302,11 +265,7 @@ mod tests {
     #[test_case("1 * (2 - 3)", false; "nested infix expression")]
     fn validate_postfix_tests(input: &str, expected: bool) {
         assert_eq!(
-            FixExpression {
-                expression: Expression::from_str(input).unwrap(),
-                fix: Fix::Post
-            }
-            .validate(),
+            PostfixExpression(Expression::from_str(input).unwrap()).validate(),
             expected,
         );
     }
