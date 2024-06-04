@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashSet};
 use std::iter::{repeat, zip};
 use std::str::FromStr;
 
-struct NumbersRound {
+pub struct NumbersRound {
     numbers: HashSet<usize>,
     target: usize,
 }
