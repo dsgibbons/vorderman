@@ -155,11 +155,12 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    // TODO: make tests not flaky
-    #[test_case(3, vec![1, 2] ; "simple")]
-    #[test_case(321, vec![1, 2, 3, 5, 10, 100] ; "medium")]
-    #[test_case(813, vec![1, 10, 25, 50, 75, 100] ; "hard")]
-    #[test_case(952, vec![3, 6, 25, 50, 75, 100] ; "another hard")]
+    #[test_case(3, vec![1, 2] ; "0")]
+    #[test_case(321, vec![1, 2, 3, 5, 10, 100] ; "1")]
+    #[test_case(120, vec![8, 3, 7, 2, 5, 4] ; "2")]
+    #[test_case(615, vec![25, 3, 7, 2, 5, 4] ; "3")]
+    #[test_case(813, vec![1, 10, 25, 50, 75, 100] ; "4")]
+    #[test_case(952, vec![3, 6, 25, 50, 75, 100] ; "5")]
     fn valid_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
             numbers: HashSet::from_iter(numbers),
@@ -172,8 +173,8 @@ mod tests {
         );
     }
 
-    #[test_case(30, vec![1, 2] ; "simple")]
-    #[test_case(3000, vec![2, 3, 5, 10] ; "harder")]
+    #[test_case(30, vec![1, 2] ; "0")]
+    #[test_case(3000, vec![2, 3, 5, 10] ; "1")]
     fn impossible_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
             numbers: HashSet::from_iter(numbers),
