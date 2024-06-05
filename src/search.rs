@@ -1,12 +1,11 @@
 use super::expr::{Expression, Operation, PostfixExpression, Token};
 use num::rational::Ratio;
 use std::collections::{BinaryHeap, HashSet};
-use std::iter::{repeat, zip};
-use std::str::FromStr;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NumbersRound {
-    numbers: HashSet<usize>,
-    target: usize,
+    pub numbers: HashSet<usize>,
+    pub target: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,13 +42,6 @@ impl Ord for PrioritizedPartialSolution {
     }
 }
 
-const OPERATIONS: [Operation; 4] = [
-    Operation::Add,
-    Operation::Subtract,
-    Operation::Multiply,
-    Operation::Divide,
-];
-
 fn get_options(partial: &PartialSolution) -> Vec<Token> {
     // Populate options to append to end of current partial solution
     let mut options = Vec::<Token>::new();
@@ -70,9 +62,7 @@ fn get_options(partial: &PartialSolution) -> Vec<Token> {
             options.push(Token::Operation(Operation::Multiply));
         }
 
-        if *partial.stack.last().unwrap() != Ratio::<usize>::from_integer(0) {
-            options.push(Token::Operation(Operation::Divide));
-        }
+        options.push(Token::Operation(Operation::Divide));
     }
 
     options
@@ -120,6 +110,10 @@ fn branch(partial_solution: &PartialSolution) -> Option<Vec<Box<PartialSolution>
         return None;
     }
 
+    if partial_solution.stack.len() > 0 && *partial_solution.stack.last().unwrap().numer() == 0 {
+        return None;
+    }
+
     let mut new_partial_solutons = Vec::<Box<PartialSolution>>::new();
     for token in get_options(&partial_solution) {
         new_partial_solutons.push(create_new_partial_solution(&partial_solution, &token));
@@ -144,11 +138,9 @@ pub fn search(config: NumbersRound) -> Option<PostfixExpression> {
                 {
                     return Some(PostfixExpression(new_partial_solution.expression.clone()));
                 }
-                let priority = 1;
-                priority_queue.push(PrioritizedPartialSolution(
-                    priority,
-                    new_partial_solution.clone(),
-                )); // TODO: how can clone be avoided here?
+
+                priority_queue.push(PrioritizedPartialSolution(1, new_partial_solution.clone()));
+                // TODO: how can clone be avoided here?
             }
         }
     }

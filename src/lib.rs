@@ -1,2 +1,2 @@
 mod expr;
-mod search;
+pub mod search;

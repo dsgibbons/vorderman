@@ -10,3 +10,8 @@ num = "0.4.3"
 
 [dev-dependencies]
 test-case = "*"
+criterion = "0.5.1"
+
+[[bench]]
+name = "bench"
+harness = false
