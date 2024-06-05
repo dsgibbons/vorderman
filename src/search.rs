@@ -172,6 +172,8 @@ mod tests {
 
     #[test_case(30, vec![1, 2] ; "0")]
     #[test_case(3000, vec![2, 3, 5, 10] ; "1")]
+    #[test_case(30000, vec![2, 3, 5, 8, 10] ; "2")]
+    #[test_case(300000, vec![2, 3, 5, 8, 9, 10] ; "3")]
     fn impossible_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
             numbers: HashSet::from_iter(numbers),
