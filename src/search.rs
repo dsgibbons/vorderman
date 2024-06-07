@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashSet};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NumbersRound {
-    pub numbers: HashSet<usize>,
+    pub numbers: Box<[usize]>,
     pub target: usize,
 }
 
@@ -12,17 +12,17 @@ pub struct NumbersRound {
 struct PartialSolution {
     expression: Expression,
     stack: Vec<Ratio<usize>>,
-    remaining: HashSet<usize>,
+    remaining: Box<[usize]>,
 }
 
 impl PartialSolution {
-    fn new(numbers: &HashSet<usize>) -> PartialSolution {
+    fn new(numbers: Box<[usize]>) -> PartialSolution {
         let tokens = Vec::<Token>::new();
         let stack = Vec::<Ratio<usize>>::new();
         PartialSolution {
             expression: Expression(tokens),
             stack,
-            remaining: numbers.clone(),
+            remaining: numbers,
         }
     }
 }
@@ -78,7 +78,19 @@ fn create_new_partial_solution(old: &PartialSolution, token: &Token) -> Box<Part
     match token {
         Token::Number(n) => {
             stack.push(Ratio::<usize>::from_integer((*n).try_into().unwrap()));
-            remaining.remove(&n);
+
+            remaining = {
+                let mut new_vec = Vec::new();
+                let mut found = false;
+                for elem in remaining.iter() {
+                    if *elem == *n && !found {
+                        found = true;
+                        continue;
+                    }
+                    new_vec.push(*elem);
+                }
+                new_vec.into_boxed_slice()
+            };
         }
         Token::Operation(op) => {
             let last_num = stack.pop().unwrap();
@@ -127,7 +139,7 @@ pub fn search(config: NumbersRound) -> Option<PostfixExpression> {
     let mut priority_queue = BinaryHeap::<PrioritizedPartialSolution>::new();
     priority_queue.push(PrioritizedPartialSolution(
         1,
-        Box::new(PartialSolution::new(&config.numbers)),
+        Box::new(PartialSolution::new(config.numbers)),
     ));
 
     while let Some(PrioritizedPartialSolution(priority, partial_solution)) = priority_queue.pop() {
@@ -153,14 +165,15 @@ mod tests {
     use test_case::test_case;
 
     #[test_case(3, vec![1, 2] ; "0")]
-    #[test_case(321, vec![1, 2, 3, 5, 10, 100] ; "1")]
-    #[test_case(120, vec![8, 3, 7, 2, 5, 4] ; "2")]
-    #[test_case(615, vec![25, 3, 7, 2, 5, 4] ; "3")]
-    #[test_case(813, vec![1, 10, 25, 50, 75, 100] ; "4")]
-    #[test_case(952, vec![3, 6, 25, 50, 75, 100] ; "5")]
+    #[test_case(322, vec![2, 2, 3, 5, 10, 100] ; "1")]
+    #[test_case(321, vec![1, 2, 3, 5, 10, 100] ; "2")]
+    #[test_case(120, vec![8, 3, 7, 2, 5, 4] ; "3")]
+    #[test_case(615, vec![25, 3, 7, 2, 5, 4] ; "4")]
+    #[test_case(813, vec![1, 10, 25, 50, 75, 100] ; "5")]
+    #[test_case(952, vec![3, 6, 25, 50, 75, 100] ; "6")]
     fn valid_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
-            numbers: HashSet::from_iter(numbers),
+            numbers: numbers.into_boxed_slice(),
             target,
         });
 
@@ -176,7 +189,7 @@ mod tests {
     #[test_case(300000, vec![2, 3, 5, 8, 9, 10] ; "3")]
     fn impossible_numbers_round(target: usize, numbers: Vec<usize>) {
         let solution = search(NumbersRound {
-            numbers: HashSet::from_iter(numbers),
+            numbers: numbers.into_boxed_slice(),
             target,
         });
 

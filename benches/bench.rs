@@ -7,23 +7,23 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let inputs = vec![
         NumbersRound {
             target: 321,
-            numbers: HashSet::from_iter(vec![1, 2, 3, 5, 10, 100]),
+            numbers: vec![1, 2, 3, 5, 10, 100].into_boxed_slice(),
         },
         NumbersRound {
             target: 120,
-            numbers: HashSet::from_iter(vec![8, 3, 7, 2, 5, 4]),
+            numbers: vec![8, 3, 7, 2, 5, 4].into_boxed_slice(),
         },
         NumbersRound {
             target: 615,
-            numbers: HashSet::from_iter(vec![25, 3, 7, 2, 5, 4]),
+            numbers: vec![25, 3, 7, 2, 5, 4].into_boxed_slice(),
         },
         NumbersRound {
             target: 813,
-            numbers: HashSet::from_iter(vec![1, 10, 25, 50, 75, 100]),
+            numbers: vec![1, 10, 25, 50, 75, 100].into_boxed_slice(),
         },
         NumbersRound {
             target: 952,
-            numbers: HashSet::from_iter(vec![3, 6, 25, 50, 75, 100]),
+            numbers: vec![3, 6, 25, 50, 75, 100].into_boxed_slice(),
         },
     ];
     let mut group = c.benchmark_group("search");
