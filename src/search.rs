@@ -1,12 +1,7 @@
 use super::expr::{Expression, Operation, PostfixExpression, Token};
+use super::round::NumbersRound;
 use num::rational::Ratio;
-use std::collections::{BinaryHeap, HashSet};
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NumbersRound {
-    pub numbers: Box<[usize]>,
-    pub target: usize,
-}
+use std::collections::BinaryHeap;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct PartialSolution {
