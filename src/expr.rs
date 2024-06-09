@@ -96,6 +96,12 @@ impl fmt::Display for Token {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expression(pub Vec<Token>);
 
+impl Expression {
+    pub fn new() -> Expression {
+        Expression(Vec::<Token>::new())
+    }
+}
+
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut characters = Vec::new();
@@ -159,6 +165,7 @@ impl From<PostfixExpression> for InfixExpression {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PostfixExpression(pub Expression);
 
 impl PostfixExpression {
