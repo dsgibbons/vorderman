@@ -1,7 +1,6 @@
-use std::collections::HashSet;
-
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use vorderman::search::{search, NumbersRound};
+use vorderman::round::NumbersRound;
+use vorderman::search::search;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let inputs = vec![
