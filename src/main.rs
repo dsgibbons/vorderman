@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::time::{Instant};
+use std::time::Instant;
 use vorderman::round::NumbersRound;
 use vorderman::solver::find_solution;
 
@@ -22,10 +22,8 @@ fn main() {
 
     match solution {
         Some(s) => {
-            println!(
-                "Found solution: {} in {} seconds.", s.0, time_taken,
-            );
-        },
+            println!("Found solution: {} in {} seconds.", s.0, time_taken,);
+        }
         None => {
             println!(
                 "No solutions exist. Search complete in {} seconds.",

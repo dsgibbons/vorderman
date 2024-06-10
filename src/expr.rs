@@ -102,7 +102,6 @@ impl Expression {
     }
 }
 
-
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut characters = Vec::new();
@@ -157,7 +156,6 @@ impl FromStr for Expression {
 pub enum FixExpressionError {
     InvalidFixExpression,
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PostfixExpression(pub Expression);

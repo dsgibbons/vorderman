@@ -25,7 +25,11 @@ struct Solver {
 }
 
 impl Solver {
-    fn new(numbers_round: NumbersRound, allow_fractional_intermediate_values: bool, stop_at_first_solution: bool) -> Solver {
+    fn new(
+        numbers_round: NumbersRound,
+        allow_fractional_intermediate_values: bool,
+        stop_at_first_solution: bool,
+    ) -> Solver {
         let config = Config {
             target: Ratio::<usize>::from_integer(numbers_round.target.try_into().unwrap()),
             allow_fractional_intermediate_values: allow_fractional_intermediate_values,
@@ -37,7 +41,11 @@ impl Solver {
             remaining: numbers_round.numbers,
             history: Vec::<Ratio<usize>>::new(),
         };
-        Solver {state, config, solutions: Vec::<PostfixExpression>::new()}
+        Solver {
+            state,
+            config,
+            solutions: Vec::<PostfixExpression>::new(),
+        }
     }
 
     fn get_options(&self) -> Vec<Token> {
@@ -72,7 +80,8 @@ impl Solver {
 
     fn find_solutions(&mut self) {
         if self.state.stack.len() == 1 && *self.state.stack.first().unwrap() == self.config.target {
-            self.solutions.push(PostfixExpression(self.state.expression.clone()));
+            self.solutions
+                .push(PostfixExpression(self.state.expression.clone()));
             if self.config.stop_at_first_solution {
                 return; // early exit for now
             }
@@ -100,7 +109,8 @@ impl Solver {
     fn compute_next(&mut self, token: Token) {
         match token {
             Token::Number(n) => {
-                self.state.stack
+                self.state
+                    .stack
                     .push(Ratio::<usize>::from_integer((n).try_into().unwrap()));
 
                 self.state.remaining = {
