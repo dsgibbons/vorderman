@@ -19,7 +19,7 @@ fn main() {
     println!("{:?}", numbers_round);
 
     let now = Instant::now();
-    let solution = search(numbers_round).unwrap();
+    let solution = search(numbers_round, false).unwrap();
 
     println!(
         "Found solution: {} in {} seconds.",
