@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use vorderman::round::NumbersRound;
-use vorderman::search::search;
+use vorderman::solver::find_solutions;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let inputs = vec![
@@ -25,11 +25,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             numbers: vec![3, 6, 25, 50, 75, 100],
         },
     ];
-    let mut group = c.benchmark_group("search");
+    let mut group = c.benchmark_group("find_solution");
     group.sample_size(10);
     for input in inputs.iter() {
         group.bench_function(format!("input-{}", input.target.clone()), |b| {
-            b.iter(|| search(black_box(input.clone()), false))
+            b.iter(|| find_solutions(black_box(input.clone()), false))
         });
     }
     group.finish()
