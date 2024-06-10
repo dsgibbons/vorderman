@@ -96,6 +96,12 @@ impl fmt::Display for Token {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expression(pub Vec<Token>);
 
+impl Expression {
+    pub fn new() -> Expression {
+        Expression(Vec::<Token>::new())
+    }
+}
+
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut characters = Vec::new();
@@ -151,14 +157,7 @@ pub enum FixExpressionError {
     InvalidFixExpression,
 }
 
-struct InfixExpression(Expression);
-
-impl From<PostfixExpression> for InfixExpression {
-    fn from(postfix: PostfixExpression) -> Self {
-        panic!("Not implemented yet")
-    }
-}
-
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PostfixExpression(pub Expression);
 
 impl PostfixExpression {

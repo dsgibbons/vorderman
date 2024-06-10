@@ -3,7 +3,7 @@ use rand::Rng;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NumbersRound {
-    pub numbers: Box<[usize]>,
+    pub numbers: Vec<usize>,
     pub target: usize,
 }
 
@@ -44,7 +44,7 @@ impl NumbersRound {
         }
 
         Ok(NumbersRound {
-            numbers: numbers.into_boxed_slice(),
+            numbers: numbers,
             target,
         })
     }

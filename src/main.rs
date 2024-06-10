@@ -1,7 +1,7 @@
 use clap::Parser;
-use std::time::{self, Instant};
+use std::time::Instant;
 use vorderman::round::NumbersRound;
-use vorderman::search::search;
+use vorderman::solver::find_solution;
 
 /// Generate and solve a random numbers round.
 #[derive(Parser, Debug)]
@@ -16,14 +16,19 @@ fn main() {
 
     let numbers_round = NumbersRound::new(args.smalls).unwrap();
 
-    println!("{:?}", numbers_round);
-
     let now = Instant::now();
-    let solution = search(numbers_round).unwrap();
+    let solution = find_solution(numbers_round, false);
+    let time_taken = now.elapsed().as_secs_f32();
 
-    println!(
-        "Found solution: {} in {} seconds.",
-        solution.0,
-        now.elapsed().as_secs_f32()
-    );
+    match solution {
+        Some(s) => {
+            println!("Found solution: {} in {} seconds.", s.0, time_taken,);
+        }
+        None => {
+            println!(
+                "No solutions exist. Search complete in {} seconds.",
+                time_taken,
+            );
+        }
+    };
 }
